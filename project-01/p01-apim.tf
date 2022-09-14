@@ -4,6 +4,7 @@ resource "azurerm_api_management" "apim" {
   resource_group_name = azurerm_resource_group.rg.name
   publisher_name      = var.apimPublisherName
   publisher_email     = var.apimPublisherEmail
+
   tags = {
     environment = var.environment
     source      = var.creation_source
@@ -37,6 +38,7 @@ resource "azurerm_api_management_api" "api" {
   path                = "api"
   protocols           = ["https"]
   service_url         = "${azurerm_storage_account.sa.primary_queue_endpoint}${azurerm_storage_queue.queue.name}"
+  subscription_required = false
 }
 
 # Add operation to API
