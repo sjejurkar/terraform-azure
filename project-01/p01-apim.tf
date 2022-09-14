@@ -30,14 +30,14 @@ resource "azurerm_role_assignment" "assign-send-permissions" {
 
 # Create API in API management
 resource "azurerm_api_management_api" "api" {
-  name                = "queue-api"
-  resource_group_name = azurerm_resource_group.rg.name
-  api_management_name = azurerm_api_management.apim.name
-  revision            = "1"
-  display_name        = "Message API"
-  path                = "api"
-  protocols           = ["https"]
-  service_url         = "${azurerm_storage_account.sa.primary_queue_endpoint}${azurerm_storage_queue.queue.name}"
+  name                  = "queue-api"
+  resource_group_name   = azurerm_resource_group.rg.name
+  api_management_name   = azurerm_api_management.apim.name
+  revision              = "1"
+  display_name          = "Message API"
+  path                  = "api"
+  protocols             = ["https"]
+  service_url           = "${azurerm_storage_account.sa.primary_queue_endpoint}${azurerm_storage_queue.queue.name}"
   subscription_required = false
 }
 
@@ -94,4 +94,22 @@ resource "azurerm_api_management_api_operation_policy" "policy" {
       </on-error>
   </policies>
 XML
+}
+
+# Deny access to any other resource than API management
+resource "azapi_update_resource" "secure-sa" {
+  type        = "Microsoft.Storage/storageAccounts@2021-09-01"
+  resource_id = azurerm_storage_account.sa.id
+
+  body = jsonencode({
+    properties = {
+      networkAcls = {
+        defaultAction = "Deny"
+        resourceAccessRules = [{
+          resourceId = azurerm_api_management.apim.id
+          tenantId   = data.azurerm_client_config.current.tenant_id
+        }]
+      }
+    }
+  })
 }
